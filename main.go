@@ -6,9 +6,33 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/yaml.v3"
 )
 
-// Adjust struct to match JSON format
+// Global configuration variables
+var (
+	BaseClusterName string
+	NoClusters      int
+	AccessToken     string
+	RumToken        string
+	ApiToken        string
+	InputDir        string
+	OutputDir       string
+)
+
+// Struct for parsing config.yaml
+type Config struct {
+	BaseClusterName string `yaml:"base_cluster_name"`
+	NoClusters      int    `yaml:"no_clusters"`
+	AccessToken     string `yaml:"access_token"`
+	RumToken        string `yaml:"rum_token"`
+	ApiToken        string `yaml:"api_token"`
+	InputDir        string `yaml:"input_dir"`
+	OutputDir       string `yaml:"output_dir"`
+}
+
+// Structs to match JSON format
 type MetricsFile struct {
 	ResourceMetrics []ResourceMetric `json:"resourceMetrics"`
 }
@@ -53,23 +77,24 @@ type Metric struct {
 type DataPoint struct {
 	StartTimeUnixNano string          `json:"startTimeUnixNano"`
 	TimeUnixNano      string          `json:"timeUnixNano"`
-	AsInt             json.RawMessage `json:"asInt,omitempty"` // ✅ Handles both strings & numbers
+	AsInt             json.RawMessage `json:"asInt,omitempty"`
 	AsDouble          *float64        `json:"asDouble,omitempty"`
 }
 
 func main() {
-	inputFile := "./metrics.json"
-	outputDir := "./metric"
+	// Load configuration
+	loadConfig("config.yaml")
 
 	// Create output directory
-	log.Printf("📁 Creating output directory: %s", outputDir)
-	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
+	log.Printf("📁 Creating output directory: %s", OutputDir)
+	if err := os.MkdirAll(OutputDir, os.ModePerm); err != nil {
 		log.Fatalf("❌ Failed to create metrics directory: %v", err)
 	}
 
-	// Read the entire file
-	log.Printf("📖 Reading metrics file: %s", inputFile)
-	data, err := os.ReadFile(inputFile)
+	// Read the metrics file
+	metricsFilePath := filepath.Join(InputDir, "metrics.json")
+	log.Printf("📖 Reading metrics file: %s", metricsFilePath)
+	data, err := os.ReadFile(metricsFilePath)
 	if err != nil {
 		log.Fatalf("❌ Failed to read metrics file: %v", err)
 	}
@@ -92,7 +117,7 @@ func main() {
 		log.Printf("📌 ResourceMetric has %d ScopeMetrics", len(resourceMetric.ScopeMetrics))
 
 		for _, scopeMetric := range resourceMetric.ScopeMetrics {
-			fileName := filepath.Join(outputDir, fmt.Sprintf("scopeMetrics_%d.json", counter))
+			fileName := filepath.Join(OutputDir, fmt.Sprintf("scopeMetrics_%d.json", counter))
 
 			log.Printf("🔹 Writing ScopeMetric #%d: Scope Name: %s", counter, scopeMetric.Scope.Name)
 
@@ -124,5 +149,28 @@ func main() {
 		}
 	}
 
-	log.Printf("✅ Successfully split %d ScopeMetrics into separate files in .metric/\n", counter-1)
+	log.Printf("✅ Successfully split %d ScopeMetrics into separate files in %s\n", counter-1, OutputDir)
+}
+
+func loadConfig(configPath string) {
+	file, err := os.ReadFile(configPath)
+	if err != nil {
+		log.Fatalf("❌ Failed to read config file: %v", err)
+	}
+
+	var config Config
+	if err := yaml.Unmarshal(file, &config); err != nil {
+		log.Fatalf("❌ Failed to parse config file: %v", err)
+	}
+
+	BaseClusterName = config.BaseClusterName
+	NoClusters = config.NoClusters
+	AccessToken = config.AccessToken
+	RumToken = config.RumToken
+	ApiToken = config.ApiToken
+	InputDir = config.InputDir
+	OutputDir = config.OutputDir
+
+	log.Printf("✅ Loaded config: BaseClusterName=%s, NoClusters=%d, InputDir=%s, OutputDir=%s",
+		BaseClusterName, NoClusters, InputDir, OutputDir)
 }
