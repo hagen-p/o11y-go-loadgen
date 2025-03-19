@@ -22,8 +22,10 @@ for i in "${!PROGRAMS[@]}"; do
     echo "🔧 Changing directory to ${PROGRAM_DIR}"
     cd "$PROGRAM_DIR" || { echo "❌ Failed to change directory to $PROGRAM_DIR"; exit 1; }
 
-    echo "📦 Building $PROGRAM (main.go)..."
-    go build -o "../../$OUTPUT_DIR/$PROGRAM" main.go
+    echo "📦 Building $PROGRAM (including all .go files)..."
+    
+    # Build with all .go files in the directory
+    go build -o "../../$OUTPUT_DIR/$PROGRAM" *.go
 
     # Verify the build
     if [ $? -eq 0 ]; then
