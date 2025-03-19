@@ -1,0 +1,79 @@
+{
+  "resource": {
+    "attributes": [
+      {
+        "key": "k8s.namespace.name",
+        "value": {
+          "stringValue": "kube-system"
+        }
+      },
+      {
+        "key": "k8s.replicationcontroller.name",
+        "value": {
+          "stringValue": "kube-registry-v0"
+        }
+      },
+      {
+        "key": "k8s.replicationcontroller.uid",
+        "value": {
+          "stringValue": "ca83d557-e269-421c-8807-821d1d4ebf5c"
+        }
+      },
+      {
+        "key": "metric_source",
+        "value": {
+          "stringValue": "kubernetes"
+        }
+      },
+      {
+        "key": "k8s.cluster.name",
+        "value": {
+          "stringValue": "loadgen-k3s-cluster"
+        }
+      },
+      {
+        "key": "receiver",
+        "value": {
+          "stringValue": "k8scluster"
+        }
+      }
+    ]
+  },
+  "scopeMetric": {
+    "metrics": [
+      {
+        "name": "k8s.replication_controller.available",
+        "description": "Total number of available pods (ready for at least minReadySeconds) targeted by this replication_controller",
+        "unit": "{pod}",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "1"
+            }
+          ]
+        }
+      },
+      {
+        "name": "k8s.replication_controller.desired",
+        "description": "Number of desired pods in this replication_controller",
+        "unit": "{pod}",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "1"
+            }
+          ]
+        }
+      }
+    ],
+    "schemaUrl": "",
+    "scope": {
+      "name": "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver",
+      "version": "v0.120.0"
+    }
+  }
+}

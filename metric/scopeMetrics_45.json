@@ -1,0 +1,79 @@
+{
+  "resource": {
+    "attributes": [
+      {
+        "key": "k8s.deployment.name",
+        "value": {
+          "stringValue": "chaos-dns-server"
+        }
+      },
+      {
+        "key": "k8s.deployment.uid",
+        "value": {
+          "stringValue": "de6b60b6-9ffc-48b2-8e81-9ff3859c07f2"
+        }
+      },
+      {
+        "key": "k8s.namespace.name",
+        "value": {
+          "stringValue": "chaos-mesh"
+        }
+      },
+      {
+        "key": "metric_source",
+        "value": {
+          "stringValue": "kubernetes"
+        }
+      },
+      {
+        "key": "k8s.cluster.name",
+        "value": {
+          "stringValue": "loadgen-k3s-cluster"
+        }
+      },
+      {
+        "key": "receiver",
+        "value": {
+          "stringValue": "k8scluster"
+        }
+      }
+    ]
+  },
+  "scopeMetric": {
+    "metrics": [
+      {
+        "name": "k8s.deployment.available",
+        "description": "Total number of available pods (ready for at least minReadySeconds) targeted by this deployment",
+        "unit": "{pod}",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "1"
+            }
+          ]
+        }
+      },
+      {
+        "name": "k8s.deployment.desired",
+        "description": "Number of desired pods in this deployment",
+        "unit": "{pod}",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "1"
+            }
+          ]
+        }
+      }
+    ],
+    "schemaUrl": "",
+    "scope": {
+      "name": "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver",
+      "version": "v0.120.0"
+    }
+  }
+}

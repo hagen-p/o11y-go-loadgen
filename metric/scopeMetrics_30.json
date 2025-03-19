@@ -1,0 +1,70 @@
+{
+  "resource": {
+    "attributes": [
+      {
+        "key": "k8s.namespace.name",
+        "value": {
+          "stringValue": "chaos-mesh"
+        }
+      },
+      {
+        "key": "k8s.node.name",
+        "value": {
+          "stringValue": "loadgen"
+        }
+      },
+      {
+        "key": "k8s.pod.name",
+        "value": {
+          "stringValue": "chaos-controller-manager-7fb5d7b648-7l9vl"
+        }
+      },
+      {
+        "key": "k8s.pod.uid",
+        "value": {
+          "stringValue": "663eb103-e639-49bf-8292-9e9151e62cbf"
+        }
+      },
+      {
+        "key": "metric_source",
+        "value": {
+          "stringValue": "kubernetes"
+        }
+      },
+      {
+        "key": "k8s.cluster.name",
+        "value": {
+          "stringValue": "loadgen-k3s-cluster"
+        }
+      },
+      {
+        "key": "receiver",
+        "value": {
+          "stringValue": "k8scluster"
+        }
+      }
+    ]
+  },
+  "scopeMetric": {
+    "metrics": [
+      {
+        "name": "k8s.pod.phase",
+        "description": "Current phase of the pod (1 - Pending, 2 - Running, 3 - Succeeded, 4 - Failed, 5 - Unknown)",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "2"
+            }
+          ]
+        }
+      }
+    ],
+    "schemaUrl": "",
+    "scope": {
+      "name": "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver",
+      "version": "v0.120.0"
+    }
+  }
+}

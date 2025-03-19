@@ -1,0 +1,164 @@
+{
+  "resource": {
+    "attributes": [
+      {
+        "key": "k8s.pod.uid",
+        "value": {
+          "stringValue": "f3c3ad12-5819-4b26-83ac-13407b6eebbb"
+        }
+      },
+      {
+        "key": "k8s.pod.name",
+        "value": {
+          "stringValue": "splunk-otel-collector-agent-qndqs"
+        }
+      },
+      {
+        "key": "k8s.node.name",
+        "value": {
+          "stringValue": "loadgen"
+        }
+      },
+      {
+        "key": "k8s.namespace.name",
+        "value": {
+          "stringValue": "default"
+        }
+      },
+      {
+        "key": "container.id",
+        "value": {
+          "stringValue": "f4fb399dcb7f835e3a5bf2f7113a6ff81c478e831e668419eb2da60fca35fdb4"
+        }
+      },
+      {
+        "key": "k8s.container.name",
+        "value": {
+          "stringValue": "otel-collector"
+        }
+      },
+      {
+        "key": "container.image.name",
+        "value": {
+          "stringValue": "quay.io/signalfx/splunk-otel-collector"
+        }
+      },
+      {
+        "key": "container.image.tag",
+        "value": {
+          "stringValue": "0.120.0"
+        }
+      },
+      {
+        "key": "metric_source",
+        "value": {
+          "stringValue": "kubernetes"
+        }
+      },
+      {
+        "key": "k8s.cluster.name",
+        "value": {
+          "stringValue": "loadgen-k3s-cluster"
+        }
+      },
+      {
+        "key": "receiver",
+        "value": {
+          "stringValue": "k8scluster"
+        }
+      }
+    ]
+  },
+  "scopeMetric": {
+    "metrics": [
+      {
+        "name": "k8s.container.cpu_limit",
+        "description": "Maximum resource limit set for the container. See https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#resourcerequirements-v1-core for details",
+        "unit": "{cpu}",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asDouble": 0.2
+            }
+          ]
+        }
+      },
+      {
+        "name": "k8s.container.cpu_request",
+        "description": "Resource requested for the container. See https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#resourcerequirements-v1-core for details",
+        "unit": "{cpu}",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asDouble": 0.2
+            }
+          ]
+        }
+      },
+      {
+        "name": "k8s.container.memory_limit",
+        "description": "Maximum resource limit set for the container. See https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#resourcerequirements-v1-core for details",
+        "unit": "By",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "524288000"
+            }
+          ]
+        }
+      },
+      {
+        "name": "k8s.container.memory_request",
+        "description": "Resource requested for the container. See https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#resourcerequirements-v1-core for details",
+        "unit": "By",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "524288000"
+            }
+          ]
+        }
+      },
+      {
+        "name": "k8s.container.ready",
+        "description": "Whether a container has passed its readiness probe (0 for no, 1 for yes)",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "1"
+            }
+          ]
+        }
+      },
+      {
+        "name": "k8s.container.restarts",
+        "description": "How many times the container has restarted in the recent past. This value is pulled directly from the K8s API and the value can go indefinitely high and be reset to 0 at any time depending on how your kubelet is configured to prune dead containers. It is best to not depend too much on the exact value but rather look at it as either == 0, in which case you can conclude there were no restarts in the recent past, or \u003e 0, in which case you can conclude there were restarts in the recent past, and not try and analyze the value beyond that.",
+        "unit": "{restart}",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "0"
+            }
+          ]
+        }
+      }
+    ],
+    "schemaUrl": "",
+    "scope": {
+      "name": "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver",
+      "version": "v0.120.0"
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "resource": {
+    "attributes": [
+      {
+        "key": "k8s.namespace.name",
+        "value": {
+          "stringValue": "kube-system"
+        }
+      },
+      {
+        "key": "k8s.replicaset.name",
+        "value": {
+          "stringValue": "traefik-5cbdcf97f4"
+        }
+      },
+      {
+        "key": "k8s.replicaset.uid",
+        "value": {
+          "stringValue": "aecc8472-fbf0-4fee-9304-9517831745ce"
+        }
+      },
+      {
+        "key": "metric_source",
+        "value": {
+          "stringValue": "kubernetes"
+        }
+      },
+      {
+        "key": "k8s.cluster.name",
+        "value": {
+          "stringValue": "loadgen-k3s-cluster"
+        }
+      },
+      {
+        "key": "receiver",
+        "value": {
+          "stringValue": "k8scluster"
+        }
+      }
+    ]
+  },
+  "scopeMetric": {
+    "metrics": [
+      {
+        "name": "k8s.replicaset.available",
+        "description": "Total number of available pods (ready for at least minReadySeconds) targeted by this replicaset",
+        "unit": "{pod}",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "1"
+            }
+          ]
+        }
+      },
+      {
+        "name": "k8s.replicaset.desired",
+        "description": "Number of desired pods in this replicaset",
+        "unit": "{pod}",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "1"
+            }
+          ]
+        }
+      }
+    ],
+    "schemaUrl": "",
+    "scope": {
+      "name": "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver",
+      "version": "v0.120.0"
+    }
+  }
+}

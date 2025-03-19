@@ -1,0 +1,70 @@
+{
+  "resource": {
+    "attributes": [
+      {
+        "key": "k8s.namespace.name",
+        "value": {
+          "stringValue": "default"
+        }
+      },
+      {
+        "key": "k8s.node.name",
+        "value": {
+          "stringValue": "loadgen"
+        }
+      },
+      {
+        "key": "k8s.pod.name",
+        "value": {
+          "stringValue": "splunk-otel-collector-k8s-cluster-receiver-77df4b7768-mr9s2"
+        }
+      },
+      {
+        "key": "k8s.pod.uid",
+        "value": {
+          "stringValue": "2bf9944f-10c1-4c5c-b6e1-1e48e0e3cb4b"
+        }
+      },
+      {
+        "key": "metric_source",
+        "value": {
+          "stringValue": "kubernetes"
+        }
+      },
+      {
+        "key": "k8s.cluster.name",
+        "value": {
+          "stringValue": "loadgen-k3s-cluster"
+        }
+      },
+      {
+        "key": "receiver",
+        "value": {
+          "stringValue": "k8scluster"
+        }
+      }
+    ]
+  },
+  "scopeMetric": {
+    "metrics": [
+      {
+        "name": "k8s.pod.phase",
+        "description": "Current phase of the pod (1 - Pending, 2 - Running, 3 - Succeeded, 4 - Failed, 5 - Unknown)",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "2"
+            }
+          ]
+        }
+      }
+    ],
+    "schemaUrl": "",
+    "scope": {
+      "name": "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver",
+      "version": "v0.120.0"
+    }
+  }
+}

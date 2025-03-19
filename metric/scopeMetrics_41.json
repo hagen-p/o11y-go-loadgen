@@ -1,0 +1,58 @@
+{
+  "resource": {
+    "attributes": [
+      {
+        "key": "k8s.namespace.uid",
+        "value": {
+          "stringValue": "8e4f2a36-6fa7-45fc-a1bc-b65b00c2adcf"
+        }
+      },
+      {
+        "key": "k8s.namespace.name",
+        "value": {
+          "stringValue": "chaos-mesh"
+        }
+      },
+      {
+        "key": "metric_source",
+        "value": {
+          "stringValue": "kubernetes"
+        }
+      },
+      {
+        "key": "k8s.cluster.name",
+        "value": {
+          "stringValue": "loadgen-k3s-cluster"
+        }
+      },
+      {
+        "key": "receiver",
+        "value": {
+          "stringValue": "k8scluster"
+        }
+      }
+    ]
+  },
+  "scopeMetric": {
+    "metrics": [
+      {
+        "name": "k8s.namespace.phase",
+        "description": "The current phase of namespaces (1 for active and 0 for terminating)",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "1"
+            }
+          ]
+        }
+      }
+    ],
+    "schemaUrl": "",
+    "scope": {
+      "name": "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver",
+      "version": "v0.120.0"
+    }
+  }
+}

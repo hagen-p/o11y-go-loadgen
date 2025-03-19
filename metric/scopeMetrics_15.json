@@ -1,0 +1,108 @@
+{
+  "resource": {
+    "attributes": [
+      {
+        "key": "k8s.pod.uid",
+        "value": {
+          "stringValue": "3dee43b4-8d63-4d87-bae4-22e1bb2f78cd"
+        }
+      },
+      {
+        "key": "k8s.pod.name",
+        "value": {
+          "stringValue": "helm-install-traefik-crd-jw5hz"
+        }
+      },
+      {
+        "key": "k8s.node.name",
+        "value": {
+          "stringValue": "loadgen"
+        }
+      },
+      {
+        "key": "k8s.namespace.name",
+        "value": {
+          "stringValue": "kube-system"
+        }
+      },
+      {
+        "key": "container.id",
+        "value": {
+          "stringValue": "53a5b13aae3c32186c27cf02dcc786445928af88452f868a53018c083132a0af"
+        }
+      },
+      {
+        "key": "k8s.container.name",
+        "value": {
+          "stringValue": "helm"
+        }
+      },
+      {
+        "key": "container.image.name",
+        "value": {
+          "stringValue": "docker.io/rancher/klipper-helm"
+        }
+      },
+      {
+        "key": "container.image.tag",
+        "value": {
+          "stringValue": "v0.9.4-build20250113"
+        }
+      },
+      {
+        "key": "metric_source",
+        "value": {
+          "stringValue": "kubernetes"
+        }
+      },
+      {
+        "key": "k8s.cluster.name",
+        "value": {
+          "stringValue": "loadgen-k3s-cluster"
+        }
+      },
+      {
+        "key": "receiver",
+        "value": {
+          "stringValue": "k8scluster"
+        }
+      }
+    ]
+  },
+  "scopeMetric": {
+    "metrics": [
+      {
+        "name": "k8s.container.ready",
+        "description": "Whether a container has passed its readiness probe (0 for no, 1 for yes)",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "k8s.container.restarts",
+        "description": "How many times the container has restarted in the recent past. This value is pulled directly from the K8s API and the value can go indefinitely high and be reset to 0 at any time depending on how your kubelet is configured to prune dead containers. It is best to not depend too much on the exact value but rather look at it as either == 0, in which case you can conclude there were no restarts in the recent past, or \u003e 0, in which case you can conclude there were restarts in the recent past, and not try and analyze the value beyond that.",
+        "unit": "{restart}",
+        "gauge": {
+          "dataPoints": [
+            {
+              "startTimeUnixNano": "1742310870810270553",
+              "timeUnixNano": "1742310880926650519",
+              "asInt": "0"
+            }
+          ]
+        }
+      }
+    ],
+    "schemaUrl": "",
+    "scope": {
+      "name": "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver",
+      "version": "v0.120.0"
+    }
+  }
+}
