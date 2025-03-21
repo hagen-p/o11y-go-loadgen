@@ -3,3 +3,5 @@ app/*
 .vscode/extensions.json
 .DS_Store
 src/extract_metrics/extract_metrics
+.vscode/launch.json
+metrics-new/*
