@@ -1,6 +1,7 @@
 package main
 
 import (
+        "../common"
 	"flag"
 	"fmt"
 	"log"
