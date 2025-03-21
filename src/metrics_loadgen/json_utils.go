@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -24,32 +26,78 @@ func updateClusterNames(metricsFile *MetricsFile) {
 // Update timestamps while keeping original differences
 func updateTimestamps(metricsFile *MetricsFile) {
 	currentTime := time.Now().UnixNano()
+
 	for _, metric := range metricsFile.ScopeMetric.Metrics {
 		for i := range metric.Gauge.DataPoints {
-			originalStartTime, err1 := time.ParseDuration(metric.Gauge.DataPoints[i].StartTimeUnixNano + "ns")
-			originalTime, err2 := time.ParseDuration(metric.Gauge.DataPoints[i].TimeUnixNano + "ns")
+			startStr := metric.Gauge.DataPoints[i].StartTimeUnixNano
+			endStr := metric.Gauge.DataPoints[i].TimeUnixNano
 
-			if err1 != nil || err2 != nil {
-				log.Printf("❌ Failed to parse timestamps: %v, %v", err1, err2)
-				continue
+			// Fallback time difference: 5 nanoseconds
+			const defaultDiff = 5
+
+			var (
+				originalStartTime time.Duration
+				originalTime      time.Duration
+				err1, err2        error
+			)
+
+			if startStr != "" {
+				originalStartTime, err1 = time.ParseDuration(startStr + "ns")
+			} else {
+				err1 = fmt.Errorf("StartTimeUnixNano is empty")
 			}
 
-			timeDifference := originalTime - originalStartTime
+			if endStr != "" {
+				originalTime, err2 = time.ParseDuration(endStr + "ns")
+			} else {
+				err2 = fmt.Errorf("TimeUnixNano is empty")
+			}
 
-			// Apply the same time difference
+			timeDiff := time.Duration(defaultDiff)
+			if err1 == nil && err2 == nil {
+				timeDiff = originalTime - originalStartTime
+			} else {
+				log.Printf("⚠️ Using default 5ns diff due to timestamp parse error: %v, %v", err1, err2)
+			}
+
+			// Apply the time difference
 			metric.Gauge.DataPoints[i].StartTimeUnixNano = fmt.Sprintf("%d", currentTime)
-			metric.Gauge.DataPoints[i].TimeUnixNano = fmt.Sprintf("%d", currentTime+int64(timeDifference))
+			metric.Gauge.DataPoints[i].TimeUnixNano = fmt.Sprintf("%d", currentTime+int64(timeDiff))
 		}
 	}
 }
 
-// Output JSON to console (or modify to send to OTLP later)
+// Send the processed JSON to OTLP receiver via HTTP
 func outputProcessedJSON(metricsFile MetricsFile) {
-	outputJSON, err := json.MarshalIndent(metricsFile, "", "  ")
+	outputJSON, err := json.Marshal(metricsFile)
 	if err != nil {
 		log.Printf("❌ Failed to marshal updated JSON: %v", err)
 		return
 	}
-	log.Println("📝 Processed JSON Output:")
-	fmt.Println(string(outputJSON))
+
+	// OTLP HTTP metrics endpoint
+	otlpURL := "http://localhost:5318/v1/metrics"
+
+	// Create HTTP POST request
+	req, err := http.NewRequest("POST", otlpURL, bytes.NewBuffer(outputJSON))
+	if err != nil {
+		log.Printf("❌ Failed to create HTTP request: %v", err)
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send the request
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Printf("❌ Failed to send OTLP data: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		log.Printf("✅ Successfully sent OTLP metrics to %s (status: %s)", otlpURL, resp.Status)
+	} else {
+		log.Printf("⚠️ Unexpected response from OTLP receiver: %s", resp.Status)
+	}
 }
