@@ -1,14 +1,12 @@
 package main
 
 import (
-        "../common"
 	"flag"
 	"fmt"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
+
+	"github.com/hagen-p/o11y-go-loadgen/src/common"
 )
 
 func main() {
@@ -25,19 +23,6 @@ func main() {
 	}
 
 	loadConfig(*configPath)
-	log.Printf("📂 Monitoring directory: %s", InputDir)
-
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		<-signalChan
-		log.Println("🛑 Stopping JSON processing...")
-		os.Exit(0)
-	}()
-
-	for {
-		processFiles()
-		time.Sleep(10 * time.Second)
-	}
+	common.ProcessMetricsFile()
+	log.Println("🏁 Processing complete.")
 }

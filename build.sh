@@ -1,33 +1,27 @@
 #!/bin/bash
 
-# Set the target OS and architecture
 export GOOS=darwin
-export GOARCH=arm64  # Change to "amd64" for Intel Macs
+export GOARCH=arm64
 
-# Define output directory
 OUTPUT_DIR="./app"
-
-# Ensure output directory exists
 mkdir -p "$OUTPUT_DIR"
 
-# List of programs to build (directories containing main.go)
 PROGRAMS=("extract_metrics" "metrics_loadgen")
 PROGRAM_PATHS=("src/extract_metrics" "src/metrics_loadgen")
+MAIN_FILES=("extract_metrics_main.go" "metrics_loadgen_main.go")
 
-# Compile each program
 for i in "${!PROGRAMS[@]}"; do
     PROGRAM="${PROGRAMS[$i]}"
     PROGRAM_DIR="${PROGRAM_PATHS[$i]}"
+    MAIN_FILE="${MAIN_FILES[$i]}"
     
     echo "🔧 Changing directory to ${PROGRAM_DIR}"
     cd "$PROGRAM_DIR" || { echo "❌ Failed to change directory to $PROGRAM_DIR"; exit 1; }
 
-    echo "📦 Building $PROGRAM (including all .go files)..."
-    
-    # Build with all .go files in the directory
-    go build -o "../../$OUTPUT_DIR/$PROGRAM" *.go
+    echo "📦 Building $PROGRAM (starting from $MAIN_FILE)..."
 
-    # Verify the build
+    go build -o "../../$OUTPUT_DIR/$PROGRAM" "$MAIN_FILE"
+
     if [ $? -eq 0 ]; then
         echo "✅ Build successful: $OUTPUT_DIR/$PROGRAM"
     else
@@ -35,7 +29,6 @@ for i in "${!PROGRAMS[@]}"; do
         exit 1
     fi
 
-    # Return to the root directory
     cd - > /dev/null
 done
 

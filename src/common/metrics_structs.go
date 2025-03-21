@@ -1,7 +1,8 @@
-package main
+package common
 
 import "encoding/json"
 
+// MetricsFile represents a single OTLP JSON-formatted metric set
 type MetricsFile struct {
 	Resource    Resource    `json:"resource"`
 	ScopeMetric ScopeMetric `json:"scopeMetric"`
