@@ -5,11 +5,13 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/hagen-p/o11y-go-loadgen/src/common"
 )
 
 // Process JSON files in the input directory
 func processFiles() {
-	expandedPath, err := expandPath(InputDir)
+	expandedPath, err := common.ExpandPath(common.InputDir)
 	if err != nil {
 		log.Printf("❌ Failed to expand input directory path: %v", err)
 		return
@@ -31,7 +33,7 @@ func processFiles() {
 
 // Process a single JSON file
 func processJSONFile(filePath string) {
-	expandedPath, err := expandPath(filePath)
+	expandedPath, err := common.ExpandPath(filePath)
 	if err != nil {
 		log.Printf("❌ Failed to expand file path: %v", err)
 		return
@@ -45,7 +47,7 @@ func processJSONFile(filePath string) {
 		return
 	}
 
-	var metricsFile MetricsFile
+	var metricsFile common.MetricsFile
 	if err := json.Unmarshal(data, &metricsFile); err != nil {
 		log.Printf("❌ Failed to unmarshal JSON: %v", err)
 		return

@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"os"
@@ -6,7 +6,7 @@ import (
 )
 
 // Expand paths like ~/ to absolute paths
-func expandPath(path string) (string, error) {
+func ExpandPath(path string) (string, error) {
 	if len(path) > 0 {
 		if path[0] == '~' {
 			home, err := os.UserHomeDir()

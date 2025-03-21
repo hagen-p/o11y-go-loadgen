@@ -8,6 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/hagen-p/o11y-go-loadgen/src/common"
 )
 
 func main() {
@@ -23,8 +25,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	loadConfig(*configPath)
-	log.Printf("📂 Monitoring directory: %s", InputDir)
+	common.LoadConfig(*configPath)
+	log.Printf("📂 Monitoring directory: %s", common.InputDir)
 
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)

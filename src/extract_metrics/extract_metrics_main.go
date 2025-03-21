@@ -22,7 +22,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	loadConfig(*configPath)
-	common.ProcessMetricsFile()
+	common.LoadConfig(*configPath)
+	ProcessMetricsFile()
 	log.Println("🏁 Processing complete.")
 }

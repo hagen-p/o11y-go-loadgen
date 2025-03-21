@@ -13,14 +13,12 @@ MAIN_FILES=("extract_metrics_main.go" "metrics_loadgen_main.go")
 for i in "${!PROGRAMS[@]}"; do
     PROGRAM="${PROGRAMS[$i]}"
     PROGRAM_DIR="${PROGRAM_PATHS[$i]}"
-    MAIN_FILE="${MAIN_FILES[$i]}"
     
     echo "🔧 Changing directory to ${PROGRAM_DIR}"
     cd "$PROGRAM_DIR" || { echo "❌ Failed to change directory to $PROGRAM_DIR"; exit 1; }
 
-    echo "📦 Building $PROGRAM (starting from $MAIN_FILE)..."
-
-    go build -o "../../$OUTPUT_DIR/$PROGRAM" "$MAIN_FILE"
+    echo "📦 Building $PROGRAM (including all Go files)..."
+    go build -o "../../$OUTPUT_DIR/$PROGRAM" .
 
     if [ $? -eq 0 ]; then
         echo "✅ Build successful: $OUTPUT_DIR/$PROGRAM"

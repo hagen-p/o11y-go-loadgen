@@ -7,12 +7,14 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/hagen-p/o11y-go-loadgen/src/common"
 )
 
 // Update k8s.cluster.name for multiple clusters
-func updateClusterNames(metricsFile *MetricsFile) {
-	for clusterIndex := 0; clusterIndex < NoClusters; clusterIndex++ {
-		clusterName := fmt.Sprintf("%s-%d", BaseClusterName, clusterIndex)
+func updateClusterNames(metricsFile *common.MetricsFile) {
+	for clusterIndex := 0; clusterIndex < common.NoClusters; clusterIndex++ {
+		clusterName := fmt.Sprintf("%s-%d", common.BaseClusterName, clusterIndex)
 
 		for i, attr := range metricsFile.Resource.Attributes {
 			if attr.Key == "k8s.cluster.name" {
@@ -24,7 +26,7 @@ func updateClusterNames(metricsFile *MetricsFile) {
 }
 
 // Update timestamps while keeping original differences
-func updateTimestamps(metricsFile *MetricsFile) {
+func updateTimestamps(metricsFile *common.MetricsFile) {
 	currentTime := time.Now().UnixNano()
 
 	for _, metric := range metricsFile.ScopeMetric.Metrics {
@@ -68,7 +70,7 @@ func updateTimestamps(metricsFile *MetricsFile) {
 }
 
 // Send the processed JSON to OTLP receiver via HTTP
-func outputProcessedJSON(metricsFile MetricsFile) {
+func outputProcessedJSON(metricsFile common.MetricsFile) {
 	outputJSON, err := json.Marshal(metricsFile)
 	if err != nil {
 		log.Printf("❌ Failed to marshal updated JSON: %v", err)
