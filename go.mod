@@ -1,4 +1,4 @@
-module github.com/o11y-go-loadgen
+module github.com/hagen-p/o11y-go-loadgen
 
 go 1.23.2
 
