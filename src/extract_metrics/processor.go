@@ -2,12 +2,21 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/hagen-p/o11y-go-loadgen/src/common"
 )
+
+type ExportMetricsFile struct {
+	ResourceMetrics []struct {
+		Resource     common.Resource      `json:"resource"`
+		ScopeMetrics []common.ScopeMetric `json:"scopeMetrics"`
+		SchemaURL    string               `json:"schemaUrl"`
+	} `json:"resourceMetrics"`
+}
 
 func ProcessMetricsFile() {
 	log.Printf("📁 Creating output directory: %s", common.OutputDir)
@@ -21,38 +30,41 @@ func ProcessMetricsFile() {
 		log.Fatalf("❌ Failed to read metrics file: %v", err)
 	}
 
-	log.Printf("🔍 JSON starts with: %s", string(data)[:500])
-
-	var metricsFile common.MetricsFile
+	var export ExportMetricsFile
 	log.Printf("🛠️ Parsing JSON data...")
-	if err := json.Unmarshal(data, &metricsFile); err != nil {
+	if err := json.Unmarshal(data, &export); err != nil {
 		log.Fatalf("❌ Failed to unmarshal metrics JSON: %v", err)
 	}
 
-	// Since this is a single Resource + ScopeMetric, treat it as one entry
-	log.Printf("📌 Processing single Resource and ScopeMetric")
+	count := 0
+	for _, rm := range export.ResourceMetrics {
+		for _, sm := range rm.ScopeMetrics {
+			count++
+			fileName := filepath.Join(common.OutputDir, fmt.Sprintf("scopeMetrics_%02d.json", count))
 
-	fileName := filepath.Join(common.OutputDir, "scopeMetrics_1.json")
+			outputMetric := map[string]interface{}{
+				"resource": rm.Resource,
+				"scopeMetric": map[string]interface{}{
+					"scope":     sm.Scope,
+					"metrics":   sm.Metrics,
+					"schemaUrl": sm.SchemaURL,
+				},
+			}
 
-	outputMetric := map[string]interface{}{
-		"resource": metricsFile.Resource,
-		"scopeMetric": map[string]interface{}{
-			"scope":     metricsFile.ScopeMetric.Scope,
-			"metrics":   metricsFile.ScopeMetric.Metrics,
-			"schemaUrl": metricsFile.ScopeMetric.SchemaURL,
-		},
+			outputJSON, err := json.MarshalIndent(outputMetric, "", "  ")
+			if err != nil {
+				log.Printf("❌ Failed to marshal scopeMetric: %v", err)
+				continue
+			}
+
+			err = os.WriteFile(fileName, outputJSON, 0644)
+			if err != nil {
+				log.Printf("❌ Failed to write scopeMetric file %s: %v", fileName, err)
+			} else {
+				log.Printf("✅ Successfully wrote: %s", fileName)
+			}
+		}
 	}
 
-	outputJSON, err := json.MarshalIndent(outputMetric, "", "  ")
-	if err != nil {
-		log.Printf("❌ Failed to marshal scopeMetric: %v", err)
-		return
-	}
-
-	err = os.WriteFile(fileName, outputJSON, 0644)
-	if err != nil {
-		log.Printf("❌ Failed to write scopeMetric file %s: %v", fileName, err)
-	} else {
-		log.Printf("✅ Successfully wrote scopeMetric file: %s", fileName)
-	}
+	log.Printf("📦 Wrote %d scopeMetric files", count)
 }

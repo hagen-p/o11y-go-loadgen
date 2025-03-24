@@ -5,3 +5,5 @@ app/*
 src/extract_metrics/extract_metrics
 .vscode/launch.json
 metrics-new/*
+metrics-split/*
+metric-org/*
