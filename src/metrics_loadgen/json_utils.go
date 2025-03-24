@@ -2,11 +2,16 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"time"
+
+	collector "go.opentelemetry.io/proto/otlp/collector/metrics/v1"
+	metricpb "go.opentelemetry.io/proto/otlp/metrics/v1"
+	resourcepb "go.opentelemetry.io/proto/otlp/resource/v1"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/hagen-p/o11y-go-loadgen/src/common"
 )
@@ -70,7 +75,7 @@ func updateTimestamps(metricsFile *common.MetricsFile) {
 }
 
 // Send the processed JSON to OTLP receiver via HTTP
-func outputProcessedJSON(metricsFile common.MetricsFile) {
+/* func old_outputProcessedJSON(metricsFile common.MetricsFile) {
 	outputJSON, err := json.Marshal(metricsFile)
 	if err != nil {
 		log.Printf("❌ Failed to marshal updated JSON: %v", err)
@@ -89,6 +94,12 @@ func outputProcessedJSON(metricsFile common.MetricsFile) {
 
 	req.Header.Set("Content-Type", "application/json")
 
+	// Dump and pause before sending
+	req, err = common.DumpAndPauseRequest(req, outputJSON)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Send the request
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -96,6 +107,71 @@ func outputProcessedJSON(metricsFile common.MetricsFile) {
 		return
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		log.Printf("✅ Successfully sent OTLP metrics to %s (status: %s)", otlpURL, resp.Status)
+	} else {
+		log.Printf("⚠️ Unexpected response from OTLP receiver: %s", resp.Status)
+	}
+} */
+
+func outputProcessedJSON(metricsFile common.MetricsFile) {
+	// ⚠️ Manually construct an OTLP ExportMetricsServiceRequest
+	otlpRequest := &collector.ExportMetricsServiceRequest{
+		ResourceMetrics: []*metricpb.ResourceMetrics{
+			{
+				Resource: &resourcepb.Resource{
+					Attributes: common.ToOTLPAttributes(metricsFile.Resource.Attributes),
+				},
+				ScopeMetrics: []*metricpb.ScopeMetrics{
+					{
+						Scope: common.ToOTLPScope(metricsFile.ScopeMetric.Scope),
+						//Metrics: []*metricpb.Metric{common.ToOTLPMetrics(metricsFile.ScopeMetric.Metrics)...},
+						Metrics: common.ToOTLPMetrics(metricsFile.ScopeMetric.Metrics),
+					},
+				},
+			},
+		},
+	}
+
+	// Marshal to OTLP/JSON format
+	outputJSON, err := protojson.Marshal(otlpRequest)
+	if err != nil {
+		log.Printf("❌ Failed to marshal OTLP JSON: %v", err)
+		return
+	}
+
+	otlpURL := "http://localhost:5318/v1/metrics"
+
+	req, err := http.NewRequest("POST", otlpURL, bytes.NewBuffer(outputJSON))
+	if err != nil {
+		log.Printf("❌ Failed to create HTTP request: %v", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	/* fmt.Println("DEBUG: Raw marshaled JSON:")
+	fmt.Println(string(outputJSON))
+	req, err = common.DumpAndPauseRequest(req, outputJSON)
+	if err != nil {
+		log.Fatal(err)
+	} */
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("❌ Failed to send OTLP data: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("⚠️ Could not read response body: %v", err)
+	} else if len(body) > 0 {
+		log.Println("📩 Collector response body:")
+		log.Println(string(body))
+	}
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		log.Printf("✅ Successfully sent OTLP metrics to %s (status: %s)", otlpURL, resp.Status)
