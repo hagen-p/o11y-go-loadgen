@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"time"
@@ -150,6 +149,7 @@ func outputProcessedJSON(metricsFile common.MetricsFile) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
+	// Debug out put for the request body and heacders
 	/* fmt.Println("DEBUG: Raw marshaled JSON:")
 	fmt.Println(string(outputJSON))
 	req, err = common.DumpAndPauseRequest(req, outputJSON)
@@ -165,14 +165,15 @@ func outputProcessedJSON(metricsFile common.MetricsFile) {
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("⚠️ Could not read response body: %v", err)
-	} else if len(body) > 0 {
-		log.Println("📩 Collector response body:")
-		log.Println(string(body))
-	}
-
+	//   debug output for  http response body
+	/* 	body, err := io.ReadAll(resp.Body)
+	   	if err != nil {
+	   		log.Printf("⚠️ Could not read response body: %v", err)
+	   	} else if len(body) > 0 {
+	   		log.Println("📩 Collector response body:")
+	   		log.Println(string(body))
+	   	}
+	*/
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		log.Printf("✅ Successfully sent OTLP metrics to %s (status: %s)", otlpURL, resp.Status)
 	} else {
