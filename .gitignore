@@ -8,3 +8,7 @@ metrics-new/*
 metrics-split/*
 metric-org/*
 metrics-split.zip
+k8s.json
+merge_k8s
+data/agent.json
+.gitignore
