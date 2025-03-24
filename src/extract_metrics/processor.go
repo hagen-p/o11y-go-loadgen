@@ -40,7 +40,7 @@ func ProcessMetricsFile() {
 	for _, rm := range export.ResourceMetrics {
 		for _, sm := range rm.ScopeMetrics {
 			count++
-			fileName := filepath.Join(common.OutputDir, fmt.Sprintf("scopeMetrics_%02d.json", count))
+			fileName := filepath.Join(common.OutputDir, fmt.Sprintf("scopeMetrics_%03d.json", count))
 
 			outputMetric := map[string]interface{}{
 				"resource": rm.Resource,

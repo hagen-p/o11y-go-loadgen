@@ -1,7 +1,6 @@
 package common
 
 import (
-	"encoding/json"
 	"strconv"
 
 	collectorpb "go.opentelemetry.io/proto/otlp/collector/metrics/v1"
@@ -74,12 +73,9 @@ func ToOTLPMetrics(metrics []Metric) []*metricpb.Metric {
 					dataPoint.Value = &metricpb.NumberDataPoint_AsDouble{
 						AsDouble: *dp.AsDouble,
 					}
-				} else if len(dp.AsInt) > 0 {
-					var val int64
-					if err := json.Unmarshal(dp.AsInt, &val); err == nil {
-						dataPoint.Value = &metricpb.NumberDataPoint_AsInt{
-							AsInt: val,
-						}
+				} else if dp.AsInt != nil {
+					dataPoint.Value = &metricpb.NumberDataPoint_AsInt{
+						AsInt: int64(*dp.AsInt),
 					}
 				}
 

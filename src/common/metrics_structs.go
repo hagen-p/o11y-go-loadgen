@@ -1,7 +1,5 @@
 package common
 
-import "encoding/json"
-
 // MetricsFile represents a single OTLP JSON-formatted metric set
 type MetricsFile struct {
 	Resource    Resource    `json:"resource"`
@@ -40,8 +38,8 @@ type Metric struct {
 }
 
 type DataPoint struct {
-	StartTimeUnixNano string          `json:"startTimeUnixNano"`
-	TimeUnixNano      string          `json:"timeUnixNano"`
-	AsInt             json.RawMessage `json:"asInt,omitempty"`
-	AsDouble          *float64        `json:"asDouble,omitempty"`
+	StartTimeUnixNano string       `json:"startTimeUnixNano"`
+	TimeUnixNano      string       `json:"timeUnixNano"`
+	AsInt             *Int64String `json:"asInt,omitempty"`
+	AsDouble          *float64     `json:"asDouble,omitempty"`
 }
