@@ -6,9 +6,9 @@ export GOARCH=arm64
 OUTPUT_DIR="./app"
 mkdir -p "$OUTPUT_DIR"
 
-PROGRAMS=("extract_metrics" "metrics_loadgen")
-PROGRAM_PATHS=("src/extract_metrics" "src/metrics_loadgen")
-MAIN_FILES=("extract_metrics_main.go" "metrics_loadgen_main.go")
+PROGRAMS=("extract_metrics" "metrics_loadgen" "k8s_merge")
+PROGRAM_PATHS=("src/extract_metrics" "src/metrics_loadgen" "src/k8s_merge")
+MAIN_FILES=("extract_metrics_main.go" "metrics_loadgen_main.go" k8s_merge)
 
 for i in "${!PROGRAMS[@]}"; do
     PROGRAM="${PROGRAMS[$i]}"
