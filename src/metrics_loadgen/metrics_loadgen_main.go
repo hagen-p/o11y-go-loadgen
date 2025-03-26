@@ -38,7 +38,8 @@ func main() {
 	}()
 
 	for {
-		processFiles()
+		//processFiles()
+		processSingleFile()
 		time.Sleep(10 * time.Second)
 	}
 }

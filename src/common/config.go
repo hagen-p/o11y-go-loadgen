@@ -43,6 +43,31 @@ func LoadConfig(configPath string) {
 	InputFile, _ = ExpandPath(config.InputFile)
 	OutputDir, _ = ExpandPath(config.OutputDir)
 
-	log.Printf("✅ Loaded config: BaseClusterName=%s, NoClusters=%d, InputDir=%s, OutputDir=%s",
-		BaseClusterName, NoClusters, InputDir, OutputDir)
+	PrintConfig("InputFile")
+}
+
+func PrintConfig(fields ...string) {
+	log.Println("✅ Selected config values:")
+	for _, field := range fields {
+		switch field {
+		case "BaseClusterName":
+			log.Printf("  BaseClusterName: %s", BaseClusterName)
+		case "NoClusters":
+			log.Printf("  NoClusters:      %d", NoClusters)
+		case "AccessToken":
+			log.Printf("  AccessToken:     %s", AccessToken)
+		case "RumToken":
+			log.Printf("  RumToken:        %s", RumToken)
+		case "ApiToken":
+			log.Printf("  ApiToken:        %s", ApiToken)
+		case "InputDir":
+			log.Printf("  InputDir:        %s", InputDir)
+		case "InputFile":
+			log.Printf("  InputFile:       %s", InputFile)
+		case "OutputDir":
+			log.Printf("  OutputDir:       %s", OutputDir)
+		default:
+			log.Printf("  ⚠️ Unknown config field: %s", field)
+		}
+	}
 }

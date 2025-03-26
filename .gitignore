@@ -12,3 +12,4 @@ k8s.json
 merge_k8s
 data/agent.json
 .gitignore
+metrics-split 2.zip

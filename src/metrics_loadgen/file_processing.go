@@ -10,6 +10,16 @@ import (
 	"github.com/hagen-p/o11y-go-loadgen/src/common"
 )
 
+// Process single JSON file
+func processSingleFile() {
+	if common.InputFile == "" {
+		log.Println("❌ No input file specified in config.")
+		return
+	}
+
+	processJSONFile(common.InputFile)
+}
+
 // Process JSON files in the input directory
 func processFiles() {
 	expandedPath, err := common.ExpandPath(common.InputDir)
@@ -40,6 +50,15 @@ func processJSONFile(filePath string) {
 		return
 	}
 
+	dir := filepath.Dir(expandedPath)
+	replacementsFile := filepath.Join(dir, "replacements.json")
+	replacements := make(map[string]string)
+
+	// Load previous replacements if the file exists
+	if data, err := os.ReadFile(replacementsFile); err == nil {
+		_ = json.Unmarshal(data, &replacements)
+	}
+
 	log.Printf("📖 Processing file: %s", expandedPath)
 
 	data, err := os.ReadFile(expandedPath)
@@ -48,61 +67,82 @@ func processJSONFile(filePath string) {
 		return
 	}
 
-	// 🔹 This is where you define the original metricsFile
 	var metricsFile common.MetricsFile
 	if err := json.Unmarshal(data, &metricsFile); err != nil {
 		log.Printf("❌ Failed to unmarshal JSON: %v", err)
 		return
 	}
 
-	// 🔁 Now loop over clusters
+	nodeNameCounter := make(map[string]int)
+
 	for clusterIndex := 0; clusterIndex < common.NoClusters; clusterIndex++ {
-		// 🔹 Deep copy the original for this cluster
 		metricsCopy := common.DeepCopyMetricsFile(metricsFile)
-
-		/* 		// 🔁 Update cluster name
-		   		clusterName := fmt.Sprintf("%s-%d", common.BaseClusterName, clusterIndex)
-		   		for i, attr := range metricsCopy.Resource.Attributes {
-		   			if attr.Key == "k8s.cluster.name" {
-		   				log.Printf("🔄 Updating cluster name: %s -> %s", attr.Value.StringValue, clusterName)
-		   				metricsCopy.Resource.Attributes[i].Value.StringValue = clusterName
-		   			}
-		   		} */
-		// Map to track how many times we've seen a node name per cluster
-		nodeNameCounter := make(map[string]int)
-
-		// 🔁 Update cluster and node name
 		clusterName := fmt.Sprintf("%s-%02d", common.BaseClusterName, clusterIndex)
 
-		for i, attr := range metricsCopy.Resource.Attributes {
-			if attr.Key == "k8s.cluster.name" {
-				log.Printf("🔄 Updating cluster name: %s -> %s", attr.Value.StringValue, clusterName)
-				metricsCopy.Resource.Attributes[i].Value.StringValue = clusterName
-			}
-			if attr.Key == "k8s.node.name" {
-				originalNodeName := attr.Value.StringValue
+		var resolvedNodeName string
 
-				// Track how many times we've renamed this base node in this cluster
-				counterKey := fmt.Sprintf("%s-%02d", originalNodeName, clusterIndex)
+		for i, attr := range metricsCopy.Resource.Attributes {
+			key := attr.Key
+			val := attr.Value.StringValue
+
+			switch key {
+			case "k8s.cluster.name":
+				mappedKey := fmt.Sprintf("cluster:%s:%02d", val, clusterIndex)
+				if replacement, ok := replacements[mappedKey]; ok {
+					metricsCopy.Resource.Attributes[i].Value.StringValue = replacement
+				} else {
+					replacements[mappedKey] = clusterName
+					metricsCopy.Resource.Attributes[i].Value.StringValue = clusterName
+					log.Printf("🔄 Updating cluster name: %s -> %s", val, clusterName)
+				}
+
+			case "k8s.node.name":
+				counterKey := fmt.Sprintf("%s-%02d", val, clusterIndex)
 				count := nodeNameCounter[counterKey]
 				nodeNameCounter[counterKey]++
 
-				// Convert count to AA, AB, AC, ..., ZZ
 				letter1 := 'A' + (count / 26)
 				letter2 := 'A' + (count % 26)
 				suffix := fmt.Sprintf("%c%c", letter1, letter2)
+				newNodeName := fmt.Sprintf("%s-%s-%02d", val, suffix, clusterIndex)
 
-				newNodeName := fmt.Sprintf("%s-%s-%02d", originalNodeName, suffix, clusterIndex)
+				mappedKey := fmt.Sprintf("node:%s:%02d:%d", val, clusterIndex, count)
+				if replacement, ok := replacements[mappedKey]; ok {
+					metricsCopy.Resource.Attributes[i].Value.StringValue = replacement
+				} else {
+					replacements[mappedKey] = newNodeName
+					metricsCopy.Resource.Attributes[i].Value.StringValue = newNodeName
+					log.Printf("🔄 Updating node name: %s -> %s", val, newNodeName)
+				}
 
-				log.Printf("🔄 Updating node name: %s -> %s", originalNodeName, newNodeName)
-				metricsCopy.Resource.Attributes[i].Value.StringValue = newNodeName
+				// Store resolved node name for syncing to host.name
+				resolvedNodeName = metricsCopy.Resource.Attributes[i].Value.StringValue
+
+			case "host.name":
+				if resolvedNodeName != "" {
+					metricsCopy.Resource.Attributes[i].Value.StringValue = resolvedNodeName
+					log.Printf("🔄 Syncing host name to node name: %s", resolvedNodeName)
+				}
+
+			case "k8s.pod.uid":
+				mappedKey := fmt.Sprintf("pod:%s:%02d", val, clusterIndex)
+				if replacement, ok := replacements[mappedKey]; ok {
+					metricsCopy.Resource.Attributes[i].Value.StringValue = replacement
+				} else {
+					newUID := fmt.Sprintf("uid-%s-%02d", val[:8], clusterIndex)
+					replacements[mappedKey] = newUID
+					metricsCopy.Resource.Attributes[i].Value.StringValue = newUID
+					log.Printf("🔄 Updating pod UID: %s -> %s", val, newUID)
+				}
 			}
 		}
 
-		// 🕒 Adjust timestamps
 		updateTimestamps(&metricsCopy)
-
-		// 🚀 Send it
 		outputProcessedJSON(metricsCopy)
+	}
+
+	// Save updated replacements
+	if jsonData, err := json.MarshalIndent(replacements, "", "  "); err == nil {
+		_ = os.WriteFile(replacementsFile, jsonData, 0644)
 	}
 }
