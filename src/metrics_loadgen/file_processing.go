@@ -16,7 +16,6 @@ func processSingleFile() {
 		log.Println("❌ No input file specified in config.")
 		return
 	}
-
 	processJSONFile(common.InputFile)
 }
 
@@ -78,61 +77,59 @@ func processJSONFile(filePath string) {
 	for clusterIndex := 0; clusterIndex < common.NoClusters; clusterIndex++ {
 		metricsCopy := common.DeepCopyMetricsFile(metricsFile)
 		clusterName := fmt.Sprintf("%s-%02d", common.BaseClusterName, clusterIndex)
-
 		var resolvedNodeName string
 
-		for i, attr := range metricsCopy.Resource.Attributes {
-			key := attr.Key
-			val := attr.Value.StringValue
+		for resIdx := range metricsCopy.ResourceMetrics {
+			resource := &metricsCopy.ResourceMetrics[resIdx].Resource
+			for i, attr := range resource.Attributes {
+				key := attr.Key
+				val := attr.Value.StringValue
 
-			switch key {
-			case "k8s.cluster.name":
-				mappedKey := fmt.Sprintf("cluster:%s:%02d", val, clusterIndex)
-				if replacement, ok := replacements[mappedKey]; ok {
-					metricsCopy.Resource.Attributes[i].Value.StringValue = replacement
-				} else {
-					replacements[mappedKey] = clusterName
-					metricsCopy.Resource.Attributes[i].Value.StringValue = clusterName
-					log.Printf("🔄 Updating cluster name: %s -> %s", val, clusterName)
-				}
+				switch key {
+				case "k8s.cluster.name":
+					mappedKey := fmt.Sprintf("cluster:%s:%02d", val, clusterIndex)
+					if replacement, ok := replacements[mappedKey]; ok {
+						resource.Attributes[i].Value.StringValue = replacement
+					} else {
+						replacements[mappedKey] = clusterName
+						resource.Attributes[i].Value.StringValue = clusterName
+						log.Printf("🔄 Updating cluster name: %s -> %s", val, clusterName)
+					}
 
-			case "k8s.node.name":
-				counterKey := fmt.Sprintf("%s-%02d", val, clusterIndex)
-				count := nodeNameCounter[counterKey]
-				nodeNameCounter[counterKey]++
+				case "k8s.node.name":
+					counterKey := fmt.Sprintf("%s-%02d", val, clusterIndex)
+					count := nodeNameCounter[counterKey]
+					nodeNameCounter[counterKey]++
+					letter1 := 'A' + (count / 26)
+					letter2 := 'A' + (count % 26)
+					suffix := fmt.Sprintf("%c%c", letter1, letter2)
+					newNodeName := fmt.Sprintf("%s-%s-%02d", val, suffix, clusterIndex)
+					mappedKey := fmt.Sprintf("node:%s:%02d:%d", val, clusterIndex, count)
+					if replacement, ok := replacements[mappedKey]; ok {
+						resource.Attributes[i].Value.StringValue = replacement
+					} else {
+						replacements[mappedKey] = newNodeName
+						resource.Attributes[i].Value.StringValue = newNodeName
+						log.Printf("🔄 Updating node name: %s -> %s", val, newNodeName)
+					}
+					resolvedNodeName = resource.Attributes[i].Value.StringValue
 
-				letter1 := 'A' + (count / 26)
-				letter2 := 'A' + (count % 26)
-				suffix := fmt.Sprintf("%c%c", letter1, letter2)
-				newNodeName := fmt.Sprintf("%s-%s-%02d", val, suffix, clusterIndex)
+				case "host.name":
+					if resolvedNodeName != "" {
+						resource.Attributes[i].Value.StringValue = resolvedNodeName
+						log.Printf("🔄 Syncing host name to node name: %s", resolvedNodeName)
+					}
 
-				mappedKey := fmt.Sprintf("node:%s:%02d:%d", val, clusterIndex, count)
-				if replacement, ok := replacements[mappedKey]; ok {
-					metricsCopy.Resource.Attributes[i].Value.StringValue = replacement
-				} else {
-					replacements[mappedKey] = newNodeName
-					metricsCopy.Resource.Attributes[i].Value.StringValue = newNodeName
-					log.Printf("🔄 Updating node name: %s -> %s", val, newNodeName)
-				}
-
-				// Store resolved node name for syncing to host.name
-				resolvedNodeName = metricsCopy.Resource.Attributes[i].Value.StringValue
-
-			case "host.name":
-				if resolvedNodeName != "" {
-					metricsCopy.Resource.Attributes[i].Value.StringValue = resolvedNodeName
-					log.Printf("🔄 Syncing host name to node name: %s", resolvedNodeName)
-				}
-
-			case "k8s.pod.uid":
-				mappedKey := fmt.Sprintf("pod:%s:%02d", val, clusterIndex)
-				if replacement, ok := replacements[mappedKey]; ok {
-					metricsCopy.Resource.Attributes[i].Value.StringValue = replacement
-				} else {
-					newUID := fmt.Sprintf("uid-%s-%02d", val[:8], clusterIndex)
-					replacements[mappedKey] = newUID
-					metricsCopy.Resource.Attributes[i].Value.StringValue = newUID
-					log.Printf("🔄 Updating pod UID: %s -> %s", val, newUID)
+				case "k8s.pod.uid":
+					mappedKey := fmt.Sprintf("pod:%s:%02d", val, clusterIndex)
+					if replacement, ok := replacements[mappedKey]; ok {
+						resource.Attributes[i].Value.StringValue = replacement
+					} else {
+						newUID := fmt.Sprintf("uid-%s-%02d", val[:8], clusterIndex)
+						replacements[mappedKey] = newUID
+						resource.Attributes[i].Value.StringValue = newUID
+						log.Printf("🔄 Updating pod UID: %s -> %s", val, newUID)
+					}
 				}
 			}
 		}
@@ -141,7 +138,6 @@ func processJSONFile(filePath string) {
 		outputProcessedJSON(metricsCopy)
 	}
 
-	// Save updated replacements
 	if jsonData, err := json.MarshalIndent(replacements, "", "  "); err == nil {
 		_ = os.WriteFile(replacementsFile, jsonData, 0644)
 	}

@@ -10,4 +10,6 @@ var (
 	InputDir        string
 	InputFile       string
 	OutputDir       string
+	DebugEnabled    bool
+	InfoEnabled     bool
 )

@@ -1,9 +1,6 @@
 base_cluster_name: "demo"    # Base  name for the simlated clusters  
 no_clusters: 99              # Max clusters to simulate
-access_token: "your-access-token"
-rum_token: "your-rum-token"
-api_token: "your-api-token"
-input_dir: "./metrics-org"
-output_dir: "./metrics-new"
-input_file: "./metric.json"
+input_dir: "./metrics-org"   #  Currently not used   
+output_dir: "./metrics-new"  # Output folder fro extract metrics 
+input_file: "./metric.json"  # Single input file
 
