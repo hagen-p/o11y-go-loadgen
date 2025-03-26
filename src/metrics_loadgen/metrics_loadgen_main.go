@@ -47,5 +47,8 @@ func main() {
 		//processFiles()
 		processSingleFile()
 		time.Sleep(10 * time.Second)
+		if common.DebugEnabled {
+			os.Exit(0)
+		}
 	}
 }

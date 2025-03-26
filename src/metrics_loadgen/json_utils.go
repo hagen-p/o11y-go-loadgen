@@ -108,13 +108,17 @@ func outputProcessedJSON(metricsFile common.MetricsFile) {
 		return
 	}
 
-	otlpURL := "http://localhost:5318/v1/metrics"
+	otlpURL := common.CollectorURL + "/v1/metrics"
 
 	req, err := http.NewRequest("POST", otlpURL, bytes.NewBuffer(outputJSON))
 	if err != nil {
 		log.Printf("❌ Failed to create HTTP request: %v", err)
 		return
 	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
 	if common.DebugEnabled {
 		_ = os.WriteFile("console.out", outputJSON, 0644)
 	}

@@ -10,6 +10,7 @@ var (
 	InputDir        string
 	InputFile       string
 	OutputDir       string
+	CollectorURL    string
 	DebugEnabled    bool
 	InfoEnabled     bool
 )

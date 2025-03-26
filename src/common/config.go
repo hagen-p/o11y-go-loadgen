@@ -17,6 +17,7 @@ type Config struct {
 	InputDir        string `yaml:"input_dir"`
 	InputFile       string `yaml:"input_file"`
 	OutputDir       string `yaml:"output_dir"`
+	CollectorURL    string `yaml:"collectorURL"`
 }
 
 // LoadConfig reads and parses the config file, updating shared globals
@@ -37,13 +38,14 @@ func LoadConfig(configPath string) {
 	AccessToken = config.AccessToken
 	RumToken = config.RumToken
 	ApiToken = config.ApiToken
+	CollectorURL = config.CollectorURL
 
 	// Expand paths (expandPath can also live in utils.go)
 	InputDir, _ = ExpandPath(config.InputDir)
 	InputFile, _ = ExpandPath(config.InputFile)
 	OutputDir, _ = ExpandPath(config.OutputDir)
 
-	PrintConfig("InputFile")
+	PrintConfig("InputFile", "CollectorURL")
 }
 
 func PrintConfig(fields ...string) {
@@ -66,6 +68,8 @@ func PrintConfig(fields ...string) {
 			log.Printf("  InputFile:       %s", InputFile)
 		case "OutputDir":
 			log.Printf("  OutputDir:       %s", OutputDir)
+		case "CollectorURL":
+			log.Printf("  CollectorURL:    %s", CollectorURL)
 		default:
 			log.Printf("  ⚠️ Unknown config field: %s", field)
 		}

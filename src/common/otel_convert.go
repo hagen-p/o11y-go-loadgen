@@ -1,6 +1,7 @@
 package common
 
 import (
+	"log"
 	"strconv"
 
 	collectorpb "go.opentelemetry.io/proto/otlp/collector/metrics/v1"
@@ -72,7 +73,9 @@ func ToOTLPMetrics(metrics []Metric) []*metricpb.Metric {
 			gauge := &metricpb.Gauge{}
 			for _, dp := range m.Gauge.DataPoints {
 				dataPoint := toOTLPDataPoint(dp)
-				gauge.DataPoints = append(gauge.DataPoints, dataPoint)
+				if dataPoint != nil {
+					gauge.DataPoints = append(gauge.DataPoints, dataPoint)
+				}
 			}
 			metric.Data = &metricpb.Metric_Gauge{Gauge: gauge}
 		} else if m.Sum != nil && len(m.Sum.DataPoints) > 0 {
@@ -82,7 +85,9 @@ func ToOTLPMetrics(metrics []Metric) []*metricpb.Metric {
 			}
 			for _, dp := range m.Sum.DataPoints {
 				dataPoint := toOTLPDataPoint(dp)
-				sum.DataPoints = append(sum.DataPoints, dataPoint)
+				if dataPoint != nil {
+					sum.DataPoints = append(sum.DataPoints, dataPoint)
+				}
 			}
 			metric.Data = &metricpb.Metric_Sum{Sum: sum}
 		} else if m.Histogram != nil && len(m.Histogram.DataPoints) > 0 {
@@ -117,6 +122,7 @@ func toOTLPDataPoint(dp DataPoint) *metricpb.NumberDataPoint {
 		TimeUnixNano:      parseUint(dp.TimeUnixNano),
 		Attributes:        []*commonpb.KeyValue{},
 	}
+
 	if dp.AsDouble != nil {
 		dataPoint.Value = &metricpb.NumberDataPoint_AsDouble{
 			AsDouble: *dp.AsDouble,
@@ -126,8 +132,16 @@ func toOTLPDataPoint(dp DataPoint) *metricpb.NumberDataPoint {
 			dataPoint.Value = &metricpb.NumberDataPoint_AsInt{
 				AsInt: val,
 			}
+		} else {
+			log.Printf("⚠️ Failed to parse AsInt value '%s': %v", dp.AsInt, err)
 		}
 	}
+
+	if dataPoint.Value == nil {
+		log.Printf("⚠️ Dropping invalid datapoint: no value (asInt/asDouble)")
+		return nil
+	}
+
 	return dataPoint
 }
 
