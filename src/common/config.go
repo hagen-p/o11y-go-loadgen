@@ -12,7 +12,7 @@ import (
 type configStruct struct {
 	BaseCluster  string `yaml:"base_cluster"`
 	BaseName     string `yaml:"base_name"`
-	Replicas     int    `yaml:"replicas"` // renamed from no_replicas
+	NoReplicas   int    `yaml:"no_replicas"`
 	CollectorURL string `yaml:"collectorURL"`
 	InputDir     string `yaml:"input_dir"`
 	DebugDir     string `yaml:"debug_dir"`
@@ -44,11 +44,11 @@ func LoadConfig(path string) {
 	InputDir = cfg.InputDir
 	DebugDir = cfg.DebugDir
 
-	if replicasOverride > 0 {
+	if replicasOverride > 1 {
 		NoReplicas = replicasOverride
 		log.Printf("⚙️ Overriding replicas from CLI: %d", NoReplicas)
 	} else {
-		NoReplicas = cfg.Replicas
+		NoReplicas = cfg.NoReplicas
 	}
 
 	if NoReplicas <= 0 {
