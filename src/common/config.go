@@ -1,73 +1,84 @@
 package common
 
 import (
+	"flag"
 	"log"
 	"os"
 
 	"gopkg.in/yaml.v3"
 )
 
-// Config holds the structure of the YAML configuration
-type Config struct {
-	BaseClusterName string `yaml:"base_cluster_name"`
-	NoClusters      int    `yaml:"no_clusters"`
-	AccessToken     string `yaml:"access_token"`
-	RumToken        string `yaml:"rum_token"`
-	ApiToken        string `yaml:"api_token"`
-	InputDir        string `yaml:"input_dir"`
-	InputFile       string `yaml:"input_file"`
-	OutputDir       string `yaml:"output_dir"`
-	CollectorURL    string `yaml:"collectorURL"`
+// configStruct defines how config.yaml is parsed
+type configStruct struct {
+	BaseCluster  string `yaml:"base_cluster"`
+	BaseName     string `yaml:"base_name"`
+	Replicas     int    `yaml:"replicas"` // renamed from no_replicas
+	CollectorURL string `yaml:"collectorURL"`
+	InputDir     string `yaml:"input_dir"`
+	DebugDir     string `yaml:"debug_dir"`
+	InputFile    string `yaml:"input_file"`
 }
 
-// LoadConfig reads and parses the config file, updating shared globals
-func LoadConfig(configPath string) {
-	file, err := os.ReadFile(configPath)
+var replicasOverride int
+
+// RegisterFlags allows other files to use --replicas
+func RegisterFlags() {
+	flag.IntVar(&replicasOverride, "replicas", 1, "Override the number of replicas in config.yaml")
+}
+
+// LoadConfig reads config.yaml, applies overrides, and validates fields
+func LoadConfig(path string) {
+	data, err := os.ReadFile(path)
 	if err != nil {
 		log.Fatalf("❌ Failed to read config file: %v", err)
 	}
 
-	var config Config
-	if err := yaml.Unmarshal(file, &config); err != nil {
+	var cfg configStruct
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		log.Fatalf("❌ Failed to parse config file: %v", err)
 	}
 
-	// Assign global variables (from globals.go)
-	BaseClusterName = config.BaseClusterName
-	NoClusters = config.NoClusters
-	AccessToken = config.AccessToken
-	RumToken = config.RumToken
-	ApiToken = config.ApiToken
-	CollectorURL = config.CollectorURL
+	BaseClusterName = cfg.BaseCluster
+	BaseNodeName = cfg.BaseName
+	CollectorURL = cfg.CollectorURL
+	InputDir = cfg.InputDir
+	DebugDir = cfg.DebugDir
 
-	// Expand paths (expandPath can also live in utils.go)
-	InputDir, _ = ExpandPath(config.InputDir)
-	InputFile, _ = ExpandPath(config.InputFile)
-	OutputDir, _ = ExpandPath(config.OutputDir)
+	if replicasOverride > 0 {
+		NoReplicas = replicasOverride
+		log.Printf("⚙️ Overriding replicas from CLI: %d", NoReplicas)
+	} else {
+		NoReplicas = cfg.Replicas
+	}
 
-	PrintConfig("InputFile", "CollectorURL")
+	if NoReplicas <= 0 {
+		log.Fatalf("❌ Invalid number of replicas: %d (must be > 0)", NoReplicas)
+	}
+
+	if expanded, err := ExpandPath(cfg.InputFile); err == nil {
+		InputFile = expanded
+	} else {
+		InputFile = cfg.InputFile
+	}
 }
 
+// Print selected fields from config for debug/info output
 func PrintConfig(fields ...string) {
 	log.Println("✅ Selected config values:")
 	for _, field := range fields {
 		switch field {
 		case "BaseClusterName":
 			log.Printf("  BaseClusterName: %s", BaseClusterName)
-		case "NoClusters":
-			log.Printf("  NoClusters:      %d", NoClusters)
-		case "AccessToken":
-			log.Printf("  AccessToken:     %s", AccessToken)
-		case "RumToken":
-			log.Printf("  RumToken:        %s", RumToken)
-		case "ApiToken":
-			log.Printf("  ApiToken:        %s", ApiToken)
+		case "BaseNodeName":
+			log.Printf("  BaseNodeName:    %s", BaseNodeName)
+		case "NoReplicas":
+			log.Printf("  NoReplicas:      %d", NoReplicas)
 		case "InputDir":
 			log.Printf("  InputDir:        %s", InputDir)
 		case "InputFile":
 			log.Printf("  InputFile:       %s", InputFile)
-		case "OutputDir":
-			log.Printf("  OutputDir:       %s", OutputDir)
+		case "DebugDir":
+			log.Printf("  DebugDir:        %s", DebugDir)
 		case "CollectorURL":
 			log.Printf("  CollectorURL:    %s", CollectorURL)
 		default:

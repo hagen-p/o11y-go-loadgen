@@ -74,7 +74,7 @@ func processJSONFile(filePath string) {
 
 	nodeNameCounter := make(map[string]int)
 
-	for clusterIndex := 0; clusterIndex < common.NoClusters; clusterIndex++ {
+	for clusterIndex := 0; clusterIndex < common.NoReplicas; clusterIndex++ {
 		metricsCopy := common.DeepCopyMetricsFile(metricsFile)
 		clusterName := fmt.Sprintf("%s-%02d", common.BaseClusterName, clusterIndex)
 		var resolvedNodeName string

@@ -1,6 +1,8 @@
-base_cluster_name: "demo"    # Base  name for the simlated clusters  
-no_clusters: 99              # Max clusters to simulate
-input_dir: "./metrics-org"   #  Currently not used   
-output_dir: "./metrics-new"  # Output folder fro extract metrics 
+base_cluster: "demo"         # Base name for the simlated clusters 
+base_name: "demo-node"       # Base name for the simulated nodes  
+replicas: 4                  # Max clusters/nodes to simulate
+input_dir: "./metrics-org"   # Currently not used   
+debug_dir: "./debug-out"     # Output folder fro extract metrics 
 input_file: "./metric.json"  # Single input file
+collectorURL: "http://localhost:5318" #adress of gateway to use
 

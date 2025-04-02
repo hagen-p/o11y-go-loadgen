@@ -19,8 +19,8 @@ type ExportMetricsFile struct {
 }
 
 func ProcessMetricsFile() {
-	log.Printf("📁 Creating output directory: %s", common.OutputDir)
-	if err := os.MkdirAll(common.OutputDir, os.ModePerm); err != nil {
+	log.Printf("📁 Creating output directory: %s", common.DebugDir)
+	if err := os.MkdirAll(common.DebugDir, os.ModePerm); err != nil {
 		log.Fatalf("❌ Failed to create metrics directory: %v", err)
 	}
 
@@ -40,7 +40,7 @@ func ProcessMetricsFile() {
 	for _, rm := range export.ResourceMetrics {
 		for _, sm := range rm.ScopeMetrics {
 			count++
-			fileName := filepath.Join(common.OutputDir, fmt.Sprintf("scopeMetrics_%03d.json", count))
+			fileName := filepath.Join(common.DebugDir, fmt.Sprintf("scopeMetrics_%03d.json", count))
 
 			outputMetric := map[string]interface{}{
 				"resource": rm.Resource,

@@ -17,7 +17,7 @@ import (
 )
 
 func updateClusterNames(metricsFile *common.MetricsFile) {
-	for clusterIndex := 0; clusterIndex < common.NoClusters; clusterIndex++ {
+	for clusterIndex := 0; clusterIndex < common.NoReplicas; clusterIndex++ {
 		clusterName := fmt.Sprintf("%s-%d", common.BaseClusterName, clusterIndex)
 		for _, rm := range metricsFile.ResourceMetrics {
 			for i, attr := range rm.Resource.Attributes {

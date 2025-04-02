@@ -26,12 +26,16 @@ func main() {
 	flag.BoolVar(&common.DebugEnabled, "d", false, "Enable debug output")
 	flag.BoolVar(&common.InfoEnabled, "I", false, "Enable info-level logs to stdout")
 
+	// 👇 This line registers --replicas flag from common package
+	common.RegisterFlags()
+
 	flag.Parse()
 
 	if *helpFlag {
 		fmt.Println("Usage: node_loadgen [options]")
 		fmt.Println("Options:")
 		fmt.Println("  --config=<path>  Specify the configuration file (default: config.yaml)")
+		fmt.Println("  --replicas=<n>   Override number of replicas from config")
 		fmt.Println("  -d               Enable debug logs")
 		fmt.Println("  -I               Enable info logs to stdout")
 		fmt.Println("  -h               Display this help message")
