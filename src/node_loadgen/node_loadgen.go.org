@@ -1,0 +1,183 @@
+package main
+
+import (
+	"bufio"
+	"bytes"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
+	"time"
+
+	"github.com/hagen-p/o11y-go-loadgen/src/common"
+)
+
+const (
+	defaultInputFile = "agent.json"
+	interval         = 5 * time.Second // interval between sends
+)
+
+func main() {
+	configPath := flag.String("config", "config.yaml", "Path to the configuration file")
+	helpFlag := flag.Bool("h", false, "Display usage information")
+
+	flag.BoolVar(&common.DebugEnabled, "d", false, "Enable debug output")
+	flag.BoolVar(&common.InfoEnabled, "I", false, "Enable info-level logs to stdout")
+
+	flag.Parse()
+
+	if *helpFlag {
+		fmt.Println("Usage: node_loadgen [options]")
+		fmt.Println("Options:")
+		fmt.Println("  --config=<path>  Specify the configuration file (default: config.yaml)")
+		fmt.Println("  -d               Enable debug logs")
+		fmt.Println("  -I               Enable info logs to stdout")
+		fmt.Println("  -h               Display this help message")
+		os.Exit(0)
+	}
+
+	common.InitLogging()
+	common.LoadConfig(*configPath)
+
+	if common.CollectorURL == "" {
+		log.Println("❌ No Collector URL specified in config.")
+		return
+	}
+
+	log.Printf("Using OTEL Collector: %s", common.CollectorURL)
+
+	if common.InputFile == "" {
+		log.Println("❌ No input file specified in config.")
+		return
+	}
+
+	expandedPath, err := common.ExpandPath(common.InputFile)
+	if err != nil {
+		log.Printf("❌ Failed to expand file path: %v", err)
+		return
+	}
+	file, err := os.Open(expandedPath)
+	if err != nil {
+		log.Fatalf("Error opening input file '%s': %v", expandedPath, err)
+	}
+	defer file.Close()
+
+	decoder := json.NewDecoder(bufio.NewReader(file))
+	log.Printf("Starting OTLP/JSON load generator targeting %s", common.CollectorURL)
+
+	for {
+		if _, err := file.Seek(0, io.SeekStart); err != nil {
+			log.Fatalf("Failed to rewind file: %v", err)
+		}
+		decoder = json.NewDecoder(bufio.NewReader(file))
+
+		for decoder.More() {
+			var payload common.MetricsFile
+			if err := decoder.Decode(&payload); err != nil {
+				log.Printf("Decode error: %v", err)
+				continue
+			}
+
+			updateTimestamps(&payload)
+
+			buf, err := json.Marshal(payload)
+			if err != nil {
+				log.Printf("Failed to marshal payload: %v", err)
+				continue
+			}
+
+			go func(payload []byte) {
+				resp, err := http.Post(common.CollectorURL+"/v1/metrics", "application/json", bytes.NewBuffer(payload))
+				if err != nil {
+					log.Printf("Error sending request: %v", err)
+					return
+				}
+				defer resp.Body.Close()
+				if resp.StatusCode >= 300 {
+					body, _ := io.ReadAll(resp.Body)
+					log.Printf("Non-success response: %s - %s", resp.Status, string(body))
+				} else {
+					log.Printf("Payload sent successfully: %s", resp.Status)
+				}
+			}(buf)
+
+			time.Sleep(interval)
+		}
+	}
+}
+
+func updateTimestamps(metricsFile *common.MetricsFile) {
+	currentTime := time.Now().UnixNano()
+	const defaultDiff = int64(5)
+
+	for _, rm := range metricsFile.ResourceMetrics {
+		for _, sm := range rm.ScopeMetrics {
+			for _, metric := range sm.Metrics {
+				if metric.Gauge != nil {
+					for i := range metric.Gauge.DataPoints {
+						updateGenericDatapointTimestamps(&metric.Gauge.DataPoints[i], currentTime, defaultDiff)
+					}
+				}
+				if metric.Sum != nil {
+					for i := range metric.Sum.DataPoints {
+						updateGenericDatapointTimestamps(&metric.Sum.DataPoints[i], currentTime, defaultDiff)
+					}
+				}
+				if metric.Histogram != nil {
+					for i := range metric.Histogram.DataPoints {
+						updateHistogramDatapointTimestamps(&metric.Histogram.DataPoints[i], currentTime, defaultDiff)
+					}
+				}
+			}
+		}
+	}
+}
+
+func updateGenericDatapointTimestamps(dp *common.DataPoint, now int64, fallbackDiff int64) {
+	updateStringTimestamps(&dp.StartTimeUnixNano, &dp.TimeUnixNano, now, fallbackDiff)
+}
+
+func updateHistogramDatapointTimestamps(dp *common.HistogramDataPoint, now int64, fallbackDiff int64) {
+	updateStringTimestamps(&dp.StartTimeUnixNano, &dp.TimeUnixNano, now, fallbackDiff)
+}
+
+func updateStringTimestamps(startStr *string, endStr *string, now int64, fallbackDiff int64) {
+	const maxAllowedDiff = int64(10 * time.Second) // 10 seconds in nanoseconds
+
+	var (
+		startTime int64
+		endTime   int64
+		err1      error
+		err2      error
+	)
+
+	if *startStr != "" {
+		startTime, err1 = strconv.ParseInt(*startStr, 10, 64)
+	} else {
+		err1 = fmt.Errorf("StartTimeUnixNano is empty")
+	}
+	if *endStr != "" {
+		endTime, err2 = strconv.ParseInt(*endStr, 10, 64)
+	} else {
+		err2 = fmt.Errorf("TimeUnixNano is empty")
+	}
+
+	timeDiff := fallbackDiff
+	if err1 == nil && err2 == nil {
+		diff := endTime - startTime
+		if diff > 0 && diff < maxAllowedDiff {
+			timeDiff = diff
+		} else {
+			log.Printf("⚠️ Clamping invalid time diff (%d ns) to default %d ns", diff, fallbackDiff)
+		}
+	} else {
+		log.Printf("⚠️ Using fallback diff due to parse errors: %v / %v", err1, err2)
+	}
+
+	*startStr = fmt.Sprintf("%d", now)
+	*endStr = fmt.Sprintf("%d", now+timeDiff)
+}

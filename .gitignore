@@ -13,3 +13,9 @@ merge_k8s
 data/agent.json
 .gitignore
 metrics-split 2.zip
+data/gateway.json
+data/first_20_seconds.json
+data/ph.json
+data/replacements.json
+
+data/replacements.json
