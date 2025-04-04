@@ -10,23 +10,30 @@ import (
 func UpdateTimestamps(metricsFile *MetricsFile) {
 	now := time.Now().UnixNano()
 	const defaultDiff = int64(5)
+
 	for _, rm := range metricsFile.ResourceMetrics {
 		for _, sm := range rm.ScopeMetrics {
 			for _, metric := range sm.Metrics {
 				if metric.Gauge != nil {
 					for i := range metric.Gauge.DataPoints {
-						UpdateGenericDatapointTimestamps(&metric.Gauge.DataPoints[i], now, defaultDiff)
+						UpdateInstantaneousDatapointTimestamps(&metric.Gauge.DataPoints[i], now, defaultDiff)
 					}
 				}
 				if metric.Sum != nil {
 					for i := range metric.Sum.DataPoints {
-						UpdateGenericDatapointTimestamps(&metric.Sum.DataPoints[i], now, defaultDiff)
+						if metric.Sum.AggregationTemporality == 2 {
+							// Cumulative: preserve start time
+							UpdateCumulativeDatapointTimestamp(&metric.Sum.DataPoints[i], now)
+						} else {
+							// Delta or unspecified: update both
+							UpdateInstantaneousDatapointTimestamps(&metric.Sum.DataPoints[i], now, defaultDiff)
+						}
 					}
 					FixSumMetric(&metric)
 				}
 				if metric.Histogram != nil {
 					for i := range metric.Histogram.DataPoints {
-						UpdateHistogramDatapointTimestamps(&metric.Histogram.DataPoints[i], now, defaultDiff)
+						UpdateInstantaneousHistogramTimestamps(&metric.Histogram.DataPoints[i], now, defaultDiff)
 					}
 				}
 			}
@@ -34,16 +41,19 @@ func UpdateTimestamps(metricsFile *MetricsFile) {
 	}
 }
 
-func UpdateGenericDatapointTimestamps(dp *DataPoint, now int64, fallbackDiff int64) {
+func UpdateInstantaneousDatapointTimestamps(dp *DataPoint, now int64, fallbackDiff int64) {
 	UpdateStringTimestamps(&dp.StartTimeUnixNano, &dp.TimeUnixNano, now, fallbackDiff)
 }
 
-func UpdateHistogramDatapointTimestamps(dp *HistogramDataPoint, now int64, fallbackDiff int64) {
+func UpdateInstantaneousHistogramTimestamps(dp *HistogramDataPoint, now int64, fallbackDiff int64) {
 	UpdateStringTimestamps(&dp.StartTimeUnixNano, &dp.TimeUnixNano, now, fallbackDiff)
+}
+
+func UpdateCumulativeDatapointTimestamp(dp *DataPoint, now int64) {
+	UpdateStringTimestampsKeepStart(&dp.StartTimeUnixNano, &dp.TimeUnixNano, now)
 }
 
 func UpdateStringTimestamps(startStr *string, endStr *string, now int64, fallbackDiff int64) {
-	// const maxAllowedDiff = int64(10 * time.Second) // ← No longer used
 	var (
 		startTime int64
 		endTime   int64
@@ -68,25 +78,22 @@ func UpdateStringTimestamps(startStr *string, endStr *string, now int64, fallbac
 		} else {
 			log.Printf("⚠️ Clamping non-positive time diff (%d ns) to default %d ns", diff, fallbackDiff)
 		}
-
-		// Old logic that clamped timeDiff if it was too large:
-		// if diff > 0 && diff < maxAllowedDiff {
-		// 	timeDiff = diff
-		// } else {
-		// 	log.Printf("⚠️ Clamping invalid time diff (%d ns) to default %d ns", diff, fallbackDiff)
-		// }
 	} else {
 		log.Printf("⚠️ Using fallback diff due to parse errors: %v / %v", err1, err2)
 	}
 	*startStr = fmt.Sprintf("%d", now)
 	*endStr = fmt.Sprintf("%d", now+timeDiff)
 }
+
+func UpdateStringTimestampsKeepStart(startStr *string, endStr *string, now int64) {
+	*endStr = fmt.Sprintf("%d", now)
+}
+
 func FixSumMetric(metric *Metric) {
 	if metric.Sum == nil {
 		return
 	}
 
-	// Nothing to preserve; just leave as-is and move to timestamps
 	now := time.Now().UnixNano()
 	for i := range metric.Sum.DataPoints {
 		dp := &metric.Sum.DataPoints[i]
