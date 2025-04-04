@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/hagen-p/o11y-go-loadgen/src/common"
@@ -19,6 +22,10 @@ const (
 )
 
 func main() {
+	var wg sync.WaitGroup
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+
 	configPath := flag.String("config", "config.yaml", "Path to the configuration file")
 	helpFlag := flag.Bool("h", false, "Display usage information")
 
@@ -77,7 +84,15 @@ func main() {
 	}
 	debugOut := &bytes.Buffer{}
 
+loop:
 	for decoder.More() {
+		select {
+		case <-stop:
+			log.Println("🛑 Received interrupt — breaking loop")
+			break loop
+		default:
+		}
+
 		var payload common.MetricsFile
 		if err := decoder.Decode(&payload); err != nil {
 			log.Printf("Decode error: %v", err)
@@ -148,39 +163,49 @@ func main() {
 					continue
 				}
 
+				wg.Add(1)
 				if common.DebugEnabled {
 					log.Println("🐞 Debug mode: printing to file")
-					go writePayloadToFile(buf)
+					go func(data []byte) {
+						defer wg.Done()
+						writePayloadToFile(data)
+					}(buf)
 				} else {
-					go sendToCollector(buf)
+					go func(data []byte) {
+						defer wg.Done()
+						sendToCollector(data)
+					}(buf)
 				}
 			}
 		} else {
-			if baseHostID != "" {
-				for rmIdx := range payload.ResourceMetrics {
-					attrs := &payload.ResourceMetrics[rmIdx].Resource.Attributes
-					for j := range *attrs {
-						if (*attrs)[j].Key == "host.id" {
-							(*attrs)[j].Value.StringValue = fmt.Sprintf("%s-01", baseHostID)
-						}
-					}
-				}
-			}
+			replica := common.DeepCopyMetricsFile(payload)
 
-			common.UpdateTimestamps(&payload)
-			buf, err := json.Marshal(payload)
+			common.UpdateTimestamps(&replica)
+
+			buf, err := json.Marshal(replica)
 			if err != nil {
 				log.Printf("Failed to marshal payload: %v", err)
 				continue
 			}
+
 			if common.DebugEnabled {
 				log.Println("🐞 Debug mode: printing to file")
-				go writePayloadToFile(buf)
+				writePayloadToFile(buf) // blocking call
+				log.Println("🐞 Debug enabled — exiting after first round")
+				return
 			} else {
-				go sendToCollector(buf)
+				wg.Add(1)
+				go func(data []byte) {
+					defer wg.Done()
+					sendToCollector(data)
+				}(buf)
 			}
 		}
 
-		time.Sleep(interval) // ✅ sleep once per round, not per replica
+		time.Sleep(interval) // ✅ sleep once per round
 	}
+
+	log.Println("⏳ Waiting for all sends to complete...")
+	wg.Wait()
+	log.Println("✅ All done.")
 }

@@ -46,7 +46,7 @@ type Metric struct {
 }
 
 type Sum struct {
-	AggregationTemporality int         `json:"aggregationTemporality"`
+	AggregationTemporality int         `json:"aggregationTemporality,omitempty"`
 	IsMonotonic            bool        `json:"isMonotonic,omitempty"`
 	DataPoints             []DataPoint `json:"dataPoints"`
 }
